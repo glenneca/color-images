@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>RGB Color & Storage Explorer</title>
+
+<style>
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 30px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  color: #555;
+  margin-bottom: 25px;
+}
+
+.controls,
+.panel,
+.storage-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.12);
+}
+
+.controls {
+  display: inline-block;
+  margin-bottom: 25px;
+}
+
+.controls input[type="number"] {
+  width: 70px;
+  padding: 7px;
+  margin: 0 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+button {
+  margin: 8px;
+  padding: 10px 18px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 35px;
+  flex-wrap: wrap;
+}
+
+.panel {
+  max-width: 90vw;
+}
+
+#grid {
+  display: grid;
+  gap: 1px;
+  background: #888;
+  border: 3px solid #333;
+  width: fit-content;
+  margin: 15px auto;
+  user-select: none;
+}
+
+.pixel {
+  background: white;
+  cursor: crosshair;
+}
+
+.color-picker-area {
+  margin: 20px 0;
+}
+
+#colorPicker {
+  width: 90px;
+  height: 55px;
+  border: none;
+  cursor: pointer;
+}
+
+.color-display {
+  margin-top: 15px;
+  font-size: 18px;
+}
+
+.value-box {
+  background: #eef1f5;
+  padding: 15px;
+  margin: 12px 0;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.value {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.binary {
+  font-family: monospace;
+  font-size: 17px;
+  word-spacing: 8px;
+}
+
+.channel {
+  display: inline-block;
+  margin: 8px;
+  min-width: 90px;
+}
+
+.storage-panel {
+  max-width: 750px;
+  margin: 30px auto 0 auto;
+}
+
+.storage-number {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.comparison {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.comparison-box {
+  background: #eef1f5;
+  padding: 15px;
+  border-radius: 8px;
+  min-width: 170px;
+}
+
+.small {
+  color: #666;
+  font-size: 14px;
+}
+
+#selectedSwatch {
+  width: 100px;
+  height: 60px;
+  margin: 10px auto;
+  border: 2px solid #333;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>RGB Color & Storage Explorer</h1>
+
+<div class="subtitle">
+Explore how computers represent color and how color affects image storage.
+</div>
+
+
+<div class="controls">
+
+  <strong>Image Dimensions</strong>
+
+  <br><br>
+
+  Width:
+  <input
+    type="number"
+    id="widthInput"
+    value="10"
+    min="1"
+    max="40"
+  >
+
+  Height:
+  <input
+    type="number"
+    id="heightInput"
+    value="10"
+    min="1"
+    max="40"
+  >
+
+  <button onclick="createCanvas()">
+    Create Canvas
+  </button>
+
+</div>
+
+
+<div class="container">
+
+
+<!-- COLOR PANEL -->
+
+<div class="panel">
+
+<h2>Choose a Color</h2>
+
+<div class="color-picker-area">
+
+  <input
+    type="color"
+    id="colorPicker"
+    value="#ff0000"
+    oninput="updateColorInfo()"
+  >
+
+</div>
+
+<div id="selectedSwatch"></div>
+
+
+<div class="value-box">
+
+  <strong>Hexadecimal</strong>
+
+  <br><br>
+
+  <span
+    class="value"
+    id="hexValue"
+  >
+    #FF0000
+  </span>
+
+</div>
+
+
+<div class="value-box">
+
+  <strong>RGB Decimal</strong>
+
+  <br><br>
+
+  <div class="channel">
+    Red<br>
+    <span
+      class="value"
+      id="redDecimal"
+    >
+      255
+    </span>
+  </div>
+
+  <div class="channel">
+    Green<br>
+    <span
+      class="value"
+      id="greenDecimal"
+    >
+      0
+    </span>
+  </div>
+
+  <div class="channel">
+    Blue<br>
+    <span
+      class="value"
+      id="blueDecimal"
+    >
+      0
+    </span>
+  </div>
+
+</div>
+
+
+<div class="value-box">
+
+  <strong>RGB Binary</strong>
+
+  <br><br>
+
+  <div class="channel">
+    Red<br>
+    <span
+      class="value"
+      id="redBinary"
+    >
+      11111111
+    </span>
+  </div>
+
+  <div class="channel">
+    Green<br>
+    <span
+      class="value"
+      id="greenBinary"
+    >
+      00000000
+    </span>
+  </div>
+
+  <div class="channel">
+    Blue<br>
+    <span
+      class="value"
+      id="blueBinary"
+    >
+      00000000
+    </span>
+  </div>
+
+</div>
+
+
+<div class="value-box">
+
+  <strong>Complete Pixel</strong>
+
+  <p
+    class="binary"
+    id="fullBinary"
+  >
+    11111111 00000000 00000000
+  </p>
+
+  <strong>24 bits = 3 bytes</strong>
+
+</div>
+
+</div>
+
+
+<!-- IMAGE PANEL -->
+
+<div class="panel">
+
+<h2>Color Pixels</h2>
+
+<div id="dimensions"></div>
+
+<div id="grid"></div>
+
+<p class="small">
+Choose a color, then click or drag across the pixels.
+</p>
+
+<button onclick="clearCanvas()">
+Clear Canvas
+</button>
+
+</div>
+
+</div>
+
+
+<!-- STORAGE PANEL -->
+
+<div class="storage-panel">
+
+<h2>Image Storage</h2>
+
+<p>
+Each RGB pixel requires:
+</p>
+
+<div class="storage-number">
+24 bits = 3 bytes
+</div>
+
+<hr>
+
+<p id="pixelCalculation"></p>
+
+<p id="bitCalculation"></p>
+
+<p id="byteCalculation"></p>
+
+<div
+  class="storage-number"
+  id="storageResult"
+></div>
+
+
+<div class="comparison">
+
+  <div class="comparison-box">
+
+    <strong>1-bit Image</strong>
+
+    <p>Black & White</p>
+
+    <span id="bwStorage"></span>
+
+  </div>
+
+
+  <div class="comparison-box">
+
+    <strong>2-bit Image</strong>
+
+    <p>4 Colors</p>
+
+    <span id="fourStorage"></span>
+
+  </div>
+
+
+  <div class="comparison-box">
+
+    <strong>24-bit RGB</strong>
+
+    <p>16.7 Million Colors</p>
+
+    <span id="rgbStorage"></span>
+
+  </div>
+
+</div>
+
+
+<p class="small">
+These calculations represent raw pixel data.
+Actual image file sizes can differ because file formats
+may include metadata and compression.
+</p>
+
+</div>
+
+
+<script>
+
+let width = 10;
+let height = 10;
+
+let pixels = [];
+
+let mouseDown = false;
+
+const grid =
+  document.getElementById("grid");
+
+
+// -----------------------------------
+// CREATE CANVAS
+// -----------------------------------
+
+function createCanvas() {
+
+  width =
+    parseInt(
+      document.getElementById(
+        "widthInput"
+      ).value
+    );
+
+  height =
+    parseInt(
+      document.getElementById(
+        "heightInput"
+      ).value
+    );
+
+
+  if (
+    isNaN(width) ||
+    isNaN(height) ||
+    width < 1 ||
+    height < 1
+  ) {
+
+    alert(
+      "Please enter valid dimensions."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    width > 40 ||
+    height > 40
+  ) {
+
+    alert(
+      "Please use dimensions of 40 pixels or less for the drawing canvas."
+    );
+
+    return;
+
+  }
+
+
+  buildGrid();
+
+  calculateStorage();
+
+}
+
+
+// -----------------------------------
+// BUILD GRID
+// -----------------------------------
+
+function buildGrid() {
+
+  grid.innerHTML = "";
+
+  pixels = [];
+
+
+  let pixelSize = 32;
+
+
+  if (
+    width > 15 ||
+    height > 15
+  ) {
+
+    pixelSize = 24;
+
+  }
+
+
+  if (
+    width > 25 ||
+    height > 25
+  ) {
+
+    pixelSize = 17;
+
+  }
+
+
+  grid.style.gridTemplateColumns =
+    `repeat(${width}, ${pixelSize}px)`;
+
+
+  for (
+    let i = 0;
+    i < width * height;
+    i++
+  ) {
+
+    const pixel =
+      document.createElement("div");
+
+
+    pixel.classList.add("pixel");
+
+    pixel.style.width =
+      pixelSize + "px";
+
+    pixel.style.height =
+      pixelSize + "px";
+
+
+    pixel.style.backgroundColor =
+      "#ffffff";
+
+
+    pixel.addEventListener(
+      "mousedown",
+      function(event) {
+
+        event.preventDefault();
+
+        mouseDown = true;
+
+        paintPixel(pixel);
+
+      }
+    );
+
+
+    pixel.addEventListener(
+      "mouseenter",
+      function() {
+
+        if (mouseDown) {
+
+          paintPixel(pixel);
+
+        }
+
+      }
+    );
+
+
+    grid.appendChild(pixel);
+
+    pixels.push(pixel);
+
+  }
+
+
+  document.getElementById(
+    "dimensions"
+  ).textContent =
+    width +
+    " × " +
+    height +
+    " pixels";
+
+}
+
+
+// -----------------------------------
+// STOP DRAWING
+// -----------------------------------
+
+document.addEventListener(
+  "mouseup",
+  function() {
+
+    mouseDown = false;
+
+  }
+);
+
+
+// -----------------------------------
+// PAINT PIXEL
+// -----------------------------------
+
+function paintPixel(pixel) {
+
+  const color =
+    document.getElementById(
+      "colorPicker"
+    ).value;
+
+
+  pixel.style.backgroundColor =
+    color;
+
+}
+
+
+// -----------------------------------
+// CLEAR
+// -----------------------------------
+
+function clearCanvas() {
+
+  pixels.forEach(
+    pixel => {
+
+      pixel.style.backgroundColor =
+        "#ffffff";
+
+    }
+  );
+
+}
+
+
+// -----------------------------------
+// COLOR INFORMATION
+// -----------------------------------
+
+function updateColorInfo() {
+
+  const hex =
+    document.getElementById(
+      "colorPicker"
+    )
+    .value
+    .toUpperCase();
+
+
+  document.getElementById(
+    "hexValue"
+  ).textContent =
+    hex;
+
+
+  document.getElementById(
+    "selectedSwatch"
+  ).style.backgroundColor =
+    hex;
+
+
+  const red =
+    parseInt(
+      hex.substring(1,3),
+      16
+    );
+
+
+  const green =
+    parseInt(
+      hex.substring(3,5),
+      16
+    );
+
+
+  const blue =
+    parseInt(
+      hex.substring(5,7),
+      16
+    );
+
+
+  document.getElementById(
+    "redDecimal"
+  ).textContent =
+    red;
+
+
+  document.getElementById(
+    "greenDecimal"
+  ).textContent =
+    green;
+
+
+  document.getElementById(
+    "blueDecimal"
+  ).textContent =
+    blue;
+
+
+  const redBinary =
+    decimalToBinary(red);
+
+
+  const greenBinary =
+    decimalToBinary(green);
+
+
+  const blueBinary =
+    decimalToBinary(blue);
+
+
+  document.getElementById(
+    "redBinary"
+  ).textContent =
+    redBinary;
+
+
+  document.getElementById(
+    "greenBinary"
+  ).textContent =
+    greenBinary;
+
+
+  document.getElementById(
+    "blueBinary"
+  ).textContent =
+    blueBinary;
+
+
+  document.getElementById(
+    "fullBinary"
+  ).textContent =
+
+    redBinary +
+    " " +
+    greenBinary +
+    " " +
+    blueBinary;
+
+}
+
+
+// -----------------------------------
+// DECIMAL TO 8-BIT BINARY
+// -----------------------------------
+
+function decimalToBinary(number) {
+
+  return number
+    .toString(2)
+    .padStart(8,"0");
+
+}
+
+
+// -----------------------------------
+// STORAGE
+// -----------------------------------
+
+function calculateStorage() {
+
+  const pixels =
+    width * height;
+
+
+  const bits =
+    pixels * 24;
+
+
+  const bytes =
+    bits / 8;
+
+
+  document.getElementById(
+    "pixelCalculation"
+  ).innerHTML =
+
+    width +
+    " × " +
+    height +
+    " = <strong>" +
+    pixels +
+    " pixels</strong>";
+
+
+  document.getElementById(
+    "bitCalculation"
+  ).innerHTML =
+
+    pixels +
+    " pixels × 24 bits = " +
+
+    "<strong>" +
+    formatNumber(bits) +
+    " bits</strong>";
+
+
+  document.getElementById(
+    "byteCalculation"
+  ).innerHTML =
+
+    formatNumber(bits) +
+    " bits ÷ 8 = " +
+
+    "<strong>" +
+    formatNumber(bytes) +
+    " bytes</strong>";
+
+
+  document.getElementById(
+    "storageResult"
+  ).textContent =
+
+    formatStorage(bytes);
+
+
+  // COMPARISON
+
+  const bwBytes =
+    pixels / 8;
+
+
+  const fourBytes =
+    (pixels * 2) / 8;
+
+
+  document.getElementById(
+    "bwStorage"
+  ).textContent =
+    formatStorage(bwBytes);
+
+
+  document.getElementById(
+    "fourStorage"
+  ).textContent =
+    formatStorage(fourBytes);
+
+
+  document.getElementById(
+    "rgbStorage"
+  ).textContent =
+    formatStorage(bytes);
+
+}
+
+
+// -----------------------------------
+// FORMAT STORAGE
+// -----------------------------------
+
+function formatStorage(bytes) {
+
+  if (bytes < 1024) {
+
+    return (
+      formatNumber(bytes) +
+      " bytes"
+    );
+
+  }
+
+
+  if (
+    bytes <
+    1024 * 1024
+  ) {
+
+    return (
+      (bytes / 1024)
+      .toFixed(2) +
+      " KB"
+    );
+
+  }
+
+
+  return (
+    (
+      bytes /
+      (1024 * 1024)
+    )
+    .toFixed(2) +
+    " MB"
+  );
+
+}
+
+
+// -----------------------------------
+// FORMAT NUMBER
+// -----------------------------------
+
+function formatNumber(number) {
+
+  return Number(
+    number.toFixed(2)
+  ).toLocaleString();
+
+}
+
+
+// -----------------------------------
+// START
+// -----------------------------------
+
+buildGrid();
+
+updateColorInfo();
+
+calculateStorage();
+
+</script>
+
+</body>
+</html>
