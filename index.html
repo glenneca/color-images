@@ -359,6 +359,16 @@ Explore how computers represent color and how color affects image storage.
 Choose a color, then click or drag across the pixels.
 </p>
 
+<div style="margin:18px 0">
+<label for="projectName">Project name:</label>
+<input id="projectName" type="text" value="My Color Image" maxlength="100" style="padding:8px;max-width:80%">
+</div>
+<button onclick="saveProject()">Save Project</button>
+<button onclick="document.getElementById('projectFile').click()">Load Project</button>
+<button onclick="downloadImage()">Download Image</button>
+<input id="projectFile" type="file" accept=".json,application/json" hidden onchange="loadProject(this)">
+<p class="small">Save Project downloads an editable JSON file. Load Project opens it again.<br>Download Image saves a PNG at the canvas pixel dimensions, without grid lines.</p>
+<p id="fileStatus" role="status" class="small"></p>
 <button onclick="clearCanvas()">
 Clear Canvas
 </button>
@@ -461,15 +471,15 @@ const grid =
 
 function createCanvas() {
 
-  width =
-    parseInt(
+  const nextWidth =
+    Number(
       document.getElementById(
         "widthInput"
       ).value
     );
 
-  height =
-    parseInt(
+  const nextHeight =
+    Number(
       document.getElementById(
         "heightInput"
       ).value
@@ -477,10 +487,10 @@ function createCanvas() {
 
 
   if (
-    isNaN(width) ||
-    isNaN(height) ||
-    width < 1 ||
-    height < 1
+    !Number.isInteger(nextWidth) ||
+    !Number.isInteger(nextHeight) ||
+    nextWidth < 1 ||
+    nextHeight < 1
   ) {
 
     alert(
@@ -493,8 +503,8 @@ function createCanvas() {
 
 
   if (
-    width > 40 ||
-    height > 40
+    nextWidth > 40 ||
+    nextHeight > 40
   ) {
 
     alert(
@@ -506,6 +516,8 @@ function createCanvas() {
   }
 
 
+  width = nextWidth;
+  height = nextHeight;
   buildGrid();
 
   calculateStorage();
@@ -940,6 +952,81 @@ function formatNumber(number) {
 // -----------------------------------
 // START
 // -----------------------------------
+
+function projectFilename() {
+  return (document.getElementById('projectName').value.trim() || 'color-image')
+    .replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '') || 'color-image';
+}
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+function pixelHex(pixel) {
+  const rgb = pixel.style.backgroundColor.match(/\d+/g);
+  return '#' + rgb.slice(0, 3).map(n => Number(n).toString(16).padStart(2, '0')).join('');
+}
+function saveProject() {
+  const data = {
+    format: 'rgb-color-storage-project', version: 1,
+    name: document.getElementById('projectName').value,
+    width, height, selectedColor: document.getElementById('colorPicker').value,
+    pixels: pixels.map(pixelHex)
+  };
+  downloadBlob(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}), projectFilename() + '.json');
+  document.getElementById('fileStatus').textContent = 'Project download started. Keep the JSON file to edit your work later.';
+}
+async function loadProject(input) {
+  const file = input.files[0];
+  if (!file) return;
+  try {
+    if (file.size > 1000000) throw new Error('Project file is too large.');
+    const data = JSON.parse(await file.text());
+    const validColor = c => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
+    if (data.format !== 'rgb-color-storage-project' || data.version !== 1 ||
+        !Number.isInteger(data.width) || !Number.isInteger(data.height) ||
+        data.width < 1 || data.width > 40 || data.height < 1 || data.height > 40 ||
+        !Array.isArray(data.pixels) || data.pixels.length !== data.width * data.height ||
+        !data.pixels.every(validColor) || !validColor(data.selectedColor) ||
+        typeof data.name !== 'string' || data.name.length > 100) {
+      throw new Error('Please choose a valid project saved by this color explorer.');
+    }
+    if (!confirm('Load this project and replace the current canvas? Save your current project first if needed.')) return;
+    width = data.width; height = data.height; mouseDown = false;
+    document.getElementById('widthInput').value = width;
+    document.getElementById('heightInput').value = height;
+    buildGrid();
+    data.pixels.forEach((color, i) => pixels[i].style.backgroundColor = color);
+    document.getElementById('projectName').value = data.name;
+    document.getElementById('colorPicker').value = data.selectedColor;
+    updateColorInfo(); calculateStorage();
+    document.getElementById('fileStatus').textContent = 'Project loaded. You can continue editing.';
+  } catch (error) {
+    document.getElementById('fileStatus').textContent = 'Could not load project: ' + error.message;
+  } finally { input.value = ''; }
+}
+function downloadImage() {
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  pixels.forEach((pixel, i) => {
+    ctx.fillStyle = pixel.style.backgroundColor;
+    ctx.fillRect(i % width, Math.floor(i / width), 1, 1);
+  });
+  canvas.toBlob(blob => {
+    if (!blob) {
+      document.getElementById('fileStatus').textContent = 'Could not create PNG. Please try again.';
+      return;
+    }
+    downloadBlob(blob, projectFilename() + '.png');
+    document.getElementById('fileStatus').textContent = 'PNG download started (' + width + ' × ' + height + ' pixels).';
+  }, 'image/png');
+}
 
 buildGrid();
 
