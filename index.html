@@ -182,6 +182,7 @@ Explore how computers represent color and how color affects image storage.
 <div class="controls">
 
   <strong>Image Dimensions</strong>
+  <p class="small">Width and height: 1–100 pixels each.</p>
 
   <br><br>
 
@@ -191,7 +192,7 @@ Explore how computers represent color and how color affects image storage.
     id="widthInput"
     value="10"
     min="1"
-    max="40"
+    max="100"
   >
 
   Height:
@@ -200,7 +201,7 @@ Explore how computers represent color and how color affects image storage.
     id="heightInput"
     value="10"
     min="1"
-    max="40"
+    max="100"
   >
 
   <button onclick="createCanvas()">
@@ -353,7 +354,7 @@ Explore how computers represent color and how color affects image storage.
 
 <div id="dimensions"></div>
 
-<div id="grid"></div>
+<div style="max-width:100%;overflow:auto"><div id="grid"></div></div>
 
 <p class="small">
 Choose a color, then click or drag across the pixels.
@@ -503,12 +504,12 @@ function createCanvas() {
 
 
   if (
-    nextWidth > 40 ||
-    nextHeight > 40
+    nextWidth > 100 ||
+    nextHeight > 100
   ) {
 
     alert(
-      "Please use dimensions of 40 pixels or less for the drawing canvas."
+      "Please use dimensions of 100 pixels or less for the drawing canvas."
     );
 
     return;
@@ -558,6 +559,8 @@ function buildGrid() {
 
   }
 
+
+  if (width > 40 || height > 40) pixelSize = 10;
 
   grid.style.gridTemplateColumns =
     `repeat(${width}, ${pixelSize}px)`;
@@ -990,7 +993,7 @@ async function loadProject(input) {
     const validColor = c => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
     if (data.format !== 'rgb-color-storage-project' || data.version !== 1 ||
         !Number.isInteger(data.width) || !Number.isInteger(data.height) ||
-        data.width < 1 || data.width > 40 || data.height < 1 || data.height > 40 ||
+        data.width < 1 || data.width > 100 || data.height < 1 || data.height > 100 ||
         !Array.isArray(data.pixels) || data.pixels.length !== data.width * data.height ||
         !data.pixels.every(validColor) || !validColor(data.selectedColor) ||
         typeof data.name !== 'string' || data.name.length > 100) {
